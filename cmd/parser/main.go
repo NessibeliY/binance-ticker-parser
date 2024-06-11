@@ -29,15 +29,28 @@ func main() {
 		cfg.MaxWorkers = numCPU
 	}
 
+	updateChan := make(chan worker.TickerUpdate)
 	symbolGroups := pkg.DivideSlice(cfg.Symbols, cfg.MaxWorkers)
 	workers := make([]*worker.Worker, cfg.MaxWorkers)
 	var wg sync.WaitGroup
 
 	for i, symbols := range symbolGroups {
-		workers[i] = worker.NewWorker(symbols)
+		workers[i] = worker.NewWorker(symbols, updateChan)
 		wg.Add(1)
 		go workers[i].Run(&wg)
 	}
+
+	tickerPrices := make(map[string]string)
+	go func() {
+		for update := range updateChan {
+			if oldPrice, ok := tickerPrices[update.Symbol]; ok && oldPrice != update.Price {
+				fmt.Printf("%s price:%s changed\n", update.Symbol, update.Price)
+			} else {
+				fmt.Printf("%s price:%s\n", update.Symbol, update.Price)
+			}
+			tickerPrices[update.Symbol] = update.Price
+		}
+	}()
 
 	go func() {
 		scheduler := gocron.NewScheduler(time.UTC)

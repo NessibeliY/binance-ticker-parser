@@ -2,4 +2,4 @@ symbols:
   - "LTCBTC"
   - "BTCUSDT"
   - "EOSUSDT"
-max_workers: 3
+max_workers: 33

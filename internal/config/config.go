@@ -3,11 +3,10 @@ package config
 import (
 	"os"
 
+	"github.com/NessibeliY/binance-ticker-parser/internal/values"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
-
-const configFile = "configs/config.yaml"
 
 type Config struct {
 	Symbols    []string `yaml:"symbols"`
@@ -16,7 +15,7 @@ type Config struct {
 
 func Load() (*Config, error) {
 	config := &Config{}
-	rawYaml, err := os.ReadFile(configFile)
+	rawYaml, err := os.ReadFile(values.ConfigFile)
 	if err != nil {
 		return nil, errors.Wrap(err, "reading config file")
 	}

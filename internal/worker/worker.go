@@ -4,27 +4,33 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/NessibeliY/binance-ticker-parser/internal/dto"
+	"github.com/NessibeliY/binance-ticker-parser/internal/values"
 )
 
-const url = "https://api.binance.com/api/v3/ticker/price?symbol=%s"
+type TickerUpdate struct {
+	Symbol string
+	Price  string
+}
 
 type Worker struct {
 	symbols      []string
-	requestCount uint64
-	stopChan     chan struct{}
+	RequestCount uint64
+	StopChan     chan struct{}
+	UpdateChan   chan TickerUpdate
 }
 
-func NewWorker(symbols []string) *Worker {
+func NewWorker(symbols []string, updateChan chan TickerUpdate) *Worker {
 	return &Worker{
-		symbols:  symbols,
-		stopChan: make(chan struct{}),
+		symbols:    symbols,
+		StopChan:   make(chan struct{}),
+		UpdateChan: updateChan,
 	}
 }
 
@@ -35,19 +41,19 @@ func (w *Worker) Run(wg *sync.WaitGroup) {
 
 	for {
 		select {
-		case <-w.stopChan:
+		case <-w.StopChan:
 			fmt.Println("Worker stopping...")
 			return
 		default:
 			for _, symbol := range w.symbols {
-				resp, err := client.Get(fmt.Sprintf(url, symbol))
-				atomic.AddUint64(&w.requestCount, 1)
+				resp, err := client.Get(fmt.Sprintf(values.Url, symbol))
+				atomic.AddUint64(&w.RequestCount, 1)
 				if err != nil {
 					fmt.Println("Error fetching price:", err)
 					continue
 				}
 
-				body, err := ioutil.ReadAll(resp.Body)
+				body, err := io.ReadAll(resp.Body)
 				if err != nil {
 					fmt.Println("Error reading response body:", err)
 					resp.Body.Close()
@@ -62,9 +68,7 @@ func (w *Worker) Run(wg *sync.WaitGroup) {
 				}
 
 				if oldPrice, ok := tickerPrices[ticker.Symbol]; ok && oldPrice != ticker.Price {
-					fmt.Printf("%s price:%s changed\n", ticker.Symbol, ticker.Price)
-				} else {
-					fmt.Printf("%s price:%s\n", ticker.Symbol, ticker.Price)
+					w.UpdateChan <- TickerUpdate{Symbol: ticker.Symbol, Price: ticker.Price}
 				}
 				tickerPrices[ticker.Symbol] = ticker.Price
 			}
@@ -75,9 +79,9 @@ func (w *Worker) Run(wg *sync.WaitGroup) {
 }
 
 func (w *Worker) GetRequestsCount() int {
-	return int(atomic.LoadUint64(&w.requestCount))
+	return int(atomic.LoadUint64(&w.RequestCount))
 }
 
 func (w *Worker) StopWorker(ctx context.Context) {
-	close(w.stopChan)
+	close(w.StopChan)
 }

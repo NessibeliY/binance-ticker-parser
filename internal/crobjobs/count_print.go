@@ -8,6 +8,7 @@ import (
 )
 
 func CountPrintJob(scheduler *gocron.Scheduler, workers []*worker.Worker) {
+	//nolint:errcheck
 	scheduler.Every(5).Seconds().Do(func() {
 		totalRequests := 0
 		for _, worker := range workers {
