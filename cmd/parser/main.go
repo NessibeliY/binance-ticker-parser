@@ -17,6 +17,8 @@ import (
 	"github.com/go-co-op/gocron"
 )
 
+const cacheSizeThreshold = 200 * 1024 * 1024
+
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -41,6 +43,7 @@ func main() {
 	}
 
 	tickerPrices := make(map[string]string)
+
 	go func() {
 		for update := range updateChan {
 			if oldPrice, ok := tickerPrices[update.Symbol]; ok && oldPrice != update.Price {

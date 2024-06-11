@@ -3,3 +3,4 @@ symbols:
   - "BTCUSDT"
   - "EOSUSDT"
 max_workers: 33
+

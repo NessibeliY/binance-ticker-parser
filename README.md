@@ -1,14 +1,15 @@
 # binance-ticker-parser
-This project is currently being developed.
+Данный проект парсер тикеров с биржи Бинанс. 
+Для запроса цен используется эндпоинт GET /api/v3/ticker/price https://binance-docs.github.io/apidocs/spot/en/#symbol-price-ticker
 
 
 
-1. Run
+1. Запустить программу можно таким путем
 ```bash
 make build
 make run
 ```
-2. Run
+2. Или таким
 ```bash
 go run ./cmd/parser/
 ```
