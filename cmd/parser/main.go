@@ -33,11 +33,11 @@ func main() {
 
 	updateChan := make(chan worker.TickerUpdate)
 	symbolGroups := pkg.DivideSlice(cfg.Symbols, cfg.MaxWorkers)
-	workers := make([]*worker.Worker, cfg.MaxWorkers)
+	workers := make([]*worker.Worker, cfg.MaxWorkers) // я бы капасити брал по symbolGroups, вдруг например оно вернет больше групп, по каким-то причинам
 	var wg sync.WaitGroup
 
 	for i, symbols := range symbolGroups {
-		workers[i] = worker.NewWorker(symbols, updateChan)
+		workers[i] = worker.NewWorker(symbols, updateChan) // я бы лучше передавал канал в метод Run - например если мы в будущем решим его где-то закрыть и потом снова вызвать Run будут проблемы
 		wg.Add(1)
 		go workers[i].Run(&wg)
 	}
@@ -78,9 +78,9 @@ func main() {
 
 	go func() {
 		for _, worker := range workers {
-			go worker.StopWorker(ctx)
+			go worker.StopWorker(ctx) // у тебя контекст там не используется, вообще не понял его смысла в таком случае
 		}
-		wg.Wait()
+		wg.Wait() // немного запутана эта игра с wg, ctx & done - я бы наверное обьявил 1 контекст в начале и предал бы его в воркеры,  и отменил бы его когда мне надо, а так у тебя и wg ждет и потом done ждет
 		close(done)
 	}()
 

@@ -15,7 +15,7 @@ type Config struct {
 
 func Load() (*Config, error) {
 	config := &Config{}
-	rawYaml, err := os.ReadFile(values.ConfigFile)
+	rawYaml, err := os.ReadFile(values.ConfigFile) // путь лучше передать параметром, а то нельзя переиспользовать
 	if err != nil {
 		return nil, errors.Wrap(err, "reading config file")
 	}

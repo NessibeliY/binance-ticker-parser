@@ -1,9 +1,10 @@
 package pkg
 
+// неплохо бы обозвать параметры попонятнее или описать что делает метод - можно например подумать что он делит слайс на 2 по индексу n
 func DivideSlice(arr []string, n int) [][]string {
 	res := make([][]string, n)
 	for i, num := range arr {
-		resIndex := i % n
+		resIndex := i % n // запаникует если n=0
 		res[resIndex] = append(res[resIndex], num)
 	}
 	return res

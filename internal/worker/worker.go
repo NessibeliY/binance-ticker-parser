@@ -36,8 +36,8 @@ func NewWorker(symbols []string, updateChan chan TickerUpdate) *Worker {
 
 func (w *Worker) Run(wg *sync.WaitGroup) {
 	defer wg.Done()
-	client := &http.Client{}
-	tickerPrices := make(map[string]string)
+	client := &http.Client{}                // почему бы не создать один клиент в констуркторе, если run будет запущен несколько раз - то будем создавать лишних клиентов и мапу с прайсами
+	tickerPrices := make(map[string]string) // зачем тебе и тут и в маин tickerPrices
 
 	for {
 		select {
@@ -56,7 +56,7 @@ func (w *Worker) Run(wg *sync.WaitGroup) {
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
 					fmt.Println("Error reading response body:", err)
-					resp.Body.Close()
+					resp.Body.Close() // лучше вынести в отдельный метод и закрывать через defer - а то можно так забыть где-то закрыть при разрастании логики
 					continue
 				}
 				resp.Body.Close()
@@ -68,7 +68,7 @@ func (w *Worker) Run(wg *sync.WaitGroup) {
 				}
 
 				if oldPrice, ok := tickerPrices[ticker.Symbol]; ok && oldPrice != ticker.Price {
-					w.UpdateChan <- TickerUpdate{Symbol: ticker.Symbol, Price: ticker.Price}
+					w.UpdateChan <- TickerUpdate{Symbol: ticker.Symbol, Price: ticker.Price} // если цена не менялась надо ведь тоже отправить
 				}
 				tickerPrices[ticker.Symbol] = ticker.Price
 			}
